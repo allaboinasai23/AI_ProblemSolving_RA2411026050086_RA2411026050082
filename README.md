@@ -5,7 +5,7 @@
 ---
 
 ### 🌐 Live Interactive Website
-> **URL:** `https://ai-problemsolving-ra2411026050086-ra2411026050082.onrender.com`
+> **URL:** `https://ai-problemsolving-ra2411026050086-ynuk.onrender.com/`
 
 ---
 
