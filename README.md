@@ -5,7 +5,7 @@
 ---
 
 ### 🌐 Live Interactive Website
-> **URL:** `https://ai-problem-solving-ra2411026050086.vercel.app`
+> **URL:** `https://ai-problemsolving-ra2411026050086-ra2411026050082.vercel.app`
 
 ---
 
