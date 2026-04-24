@@ -5,7 +5,7 @@
 ---
 
 ### 🌐 Live Interactive Website
-> **URL:** `https://ai-problemsolving-ra2411026050086-ra2411026050082.vercel.app`
+> **URL:** `https://ai-problemsolving-ra2411026050086-ra2411026050082.onrender.com`
 
 ---
 
@@ -128,7 +128,7 @@ python app.py
 - **Backend:** Python, Flask
 - **Frontend:** HTML5, CSS3, JavaScript
 - **AI Algorithms:** Minimax, Alpha-Beta Pruning, CSP with Backtracking + MRV
-- **Deployment:** Vercel
+- **Deployment:** Render
 
 ---
 
