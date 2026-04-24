@@ -2,9 +2,10 @@
 
 **Repository:** `AI_ProblemSolving_RA2411026050086_RA2411026050082`
 
-A web-based interactive application featuring two classic AI problems solved using intelligent algorithms. Built with **Python (Flask)** and deployed as a single unified web interface.
+---
 
-🔗 **Live Demo:** [Click here to play](https://ai-problemsolving-ra2411026050086-ra2411026050082.onrender.com)
+### 🌐 Live Interactive Website
+> **URL:** `https://ai-problem-solving-ra2411026050086.vercel.app`
 
 ---
 
@@ -127,7 +128,7 @@ python app.py
 - **Backend:** Python, Flask
 - **Frontend:** HTML5, CSS3, JavaScript
 - **AI Algorithms:** Minimax, Alpha-Beta Pruning, CSP with Backtracking + MRV
-- **Deployment:** Render / GitHub Pages
+- **Deployment:** Vercel
 
 ---
 
