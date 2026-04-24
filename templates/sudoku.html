@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sudoku — CSP Solver</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f0f1a;--card:#1a1a2e;--accent:#6c63ff;--accent2:#ff6584;--text:#e0e0e0;--dim:#888;--win:#00e676;--err:#ff5252;--border:rgba(255,255,255,.08);--glass:rgba(255,255,255,.04)}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(108,99,255,.12),transparent 50%),radial-gradient(circle at 70% 60%,rgba(255,101,132,.08),transparent 50%);z-index:0;pointer-events:none}
+h1{font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.25rem;position:relative;z-index:1}
+.subtitle{color:var(--dim);font-size:.85rem;margin-bottom:.75rem;position:relative;z-index:1}
+.nav{margin-bottom:1.5rem;position:relative;z-index:1}
+.nav a{color:var(--accent);text-decoration:none;font-size:.82rem;font-weight:600;padding:.4rem 1rem;border:1px solid var(--accent);border-radius:2rem;transition:all .2s}
+.nav a:hover{background:var(--accent);color:#fff}
+.container{display:flex;gap:2rem;align-items:flex-start;flex-wrap:wrap;justify-content:center;position:relative;z-index:1}
+/* Grid */
+.grid-wrap{background:var(--card);border-radius:1.25rem;padding:1.5rem;box-shadow:0 8px 32px rgba(0,0,0,.4);border:1px solid var(--border)}
+.sudoku-grid{display:grid;grid-template-columns:repeat(9,48px);grid-template-rows:repeat(9,48px);gap:0;border:2px solid var(--accent)}
+.sudoku-cell{width:48px;height:48px;background:var(--glass);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:var(--text);cursor:pointer;transition:background .15s;position:relative}
+.sudoku-cell.given{color:var(--accent);cursor:default;font-weight:900}
+.sudoku-cell.user-filled{color:var(--accent2)}
+.sudoku-cell.selected{background:rgba(108,99,255,.25);box-shadow:inset 0 0 0 2px var(--accent)}
+.sudoku-cell.highlighted{background:rgba(108,99,255,.1)}
+.sudoku-cell.error{background:rgba(255,82,82,.15);color:var(--err)}
+.sudoku-cell.solved{color:var(--win)}
+/* 3x3 borders */
+.sudoku-cell:nth-child(3n){border-right:2px solid var(--accent)}
+.sudoku-cell:nth-child(9n+1){border-left:2px solid var(--accent)}
+.sudoku-cell:nth-child(n+19):nth-child(-n+27){border-bottom:2px solid var(--accent)}
+.sudoku-cell:nth-child(n+46):nth-child(-n+54){border-bottom:2px solid var(--accent)}
+.sudoku-cell:nth-child(n+55):nth-child(-n+63){border-top:2px solid var(--accent)}
+.sudoku-cell:nth-child(n+28):nth-child(-n+36){border-top:2px solid var(--accent)}
+.sudoku-cell:nth-child(-n+9){border-top:2px solid var(--accent)}
+.sudoku-cell:nth-child(n+73){border-bottom:2px solid var(--accent)}
+/* Number pad */
+.numpad{display:grid;grid-template-columns:repeat(5,48px);gap:6px;margin-top:1rem;justify-content:center}
+.num-btn{width:48px;height:48px;border:1px solid var(--border);border-radius:.5rem;background:var(--glass);color:var(--text);font-size:1.2rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.num-btn:hover{background:rgba(108,99,255,.2);transform:scale(1.08)}
+.num-btn.erase{font-size:.75rem;color:var(--accent2)}
+/* Buttons */
+.actions{display:flex;gap:.5rem;margin-top:1rem;justify-content:center;flex-wrap:wrap}
+.btn{padding:.6rem 1.4rem;border:none;border-radius:2rem;font-family:'Inter',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 15px rgba(108,99,255,.3)}
+.btn-primary:hover{box-shadow:0 6px 20px rgba(108,99,255,.4)}
+.btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.btn-outline:hover{background:var(--accent);color:#fff}
+.btn-success{background:linear-gradient(135deg,#00c853,#00e676);color:#111}
+/* Status */
+.status{text-align:center;margin-top:1rem;font-size:1rem;font-weight:600;min-height:1.5rem;color:var(--accent);transition:all .3s}
+.status.win{color:var(--win);font-size:1.2rem}
+.status.fail{color:var(--err)}
+/* Info panel */
+.info{background:var(--card);border-radius:1.25rem;padding:1.5rem 1.75rem;box-shadow:0 8px 32px rgba(0,0,0,.4);border:1px solid var(--border);min-width:280px;max-width:320px}
+.info h2{font-size:1rem;font-weight:700;margin-bottom:.75rem}
+.info p{font-size:.8rem;color:var(--dim);line-height:1.6;margin-bottom:.75rem}
+.info code{background:rgba(108,99,255,.15);color:var(--accent);padding:.1rem .4rem;border-radius:4px;font-size:.75rem}
+.solve-info{margin-top:1rem;padding:.75rem;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:.75rem;font-size:.82rem}
+.solve-info .lbl{color:var(--dim);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em}
+.solve-info .val{color:var(--win);font-weight:700;font-size:1.1rem}
+@keyframes celebrate{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+.celebrating{animation:celebrate .4s ease}
+@media(max-width:600px){.sudoku-grid{grid-template-columns:repeat(9,38px);grid-template-rows:repeat(9,38px)}.sudoku-cell{width:38px;height:38px;font-size:1rem}.numpad{grid-template-columns:repeat(5,40px)}.num-btn{width:40px;height:40px}.container{flex-direction:column;align-items:center}}
+</style>
+</head>
+<body>
+<h1>Sudoku Solver</h1>
+<p class="subtitle">Constraint Satisfaction Problem (CSP)</p>
+<div class="nav"><a href="/">← Back to Tic-Tac-Toe</a></div>
+
+<div class="container">
+ <div class="grid-wrap" id="gridWrap">
+  <div class="sudoku-grid" id="grid"></div>
+  <div class="numpad" id="numpad"></div>
+  <div class="actions">
+   <button class="btn btn-primary" id="btnValidate" onclick="validateSolution()">✓ Check Solution</button>
+   <button class="btn btn-success" id="btnSolve" onclick="solvePuzzle()">🧠 Auto Solve (CSP)</button>
+   <button class="btn btn-outline" id="btnNew" onclick="loadPuzzle()">↻ New Puzzle</button>
+  </div>
+  <div class="status" id="status">Fill in the empty cells and check your solution!</div>
+ </div>
+
+ <div class="info">
+  <h2>📘 How It Works</h2>
+  <p>Sudoku is modelled as a <code>CSP</code> — each empty cell is a <strong>variable</strong> with domain {1–9}.</p>
+  <p><strong>Constraints:</strong></p>
+  <p>• Each <strong>row</strong> has digits 1–9 without repetition<br/>
+     • Each <strong>column</strong> has digits 1–9 without repetition<br/>
+     • Each <strong>3×3 subgrid</strong> has digits 1–9 without repetition</p>
+  <p>The solver uses <code>Backtracking</code> with the <code>MRV</code> (Minimum Remaining Values) heuristic — it picks the cell with the fewest legal options first, making the search much faster.</p>
+  <div class="solve-info" id="solveInfo" style="display:none">
+   <div class="lbl">CSP Solve Time</div>
+   <div class="val" id="solveTime">—</div>
+  </div>
+ </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let puzzle = [], userGrid = [], givenCells = new Set(), selectedCell = null;
+
+// Build numpad
+(function buildNumpad(){
+ const pad = $('#numpad');
+ for(let n=1;n<=9;n++){
+  const b = document.createElement('button');
+  b.className='num-btn'; b.textContent=n;
+  b.addEventListener('click',()=>placeNumber(n));
+  pad.appendChild(b);
+ }
+ const erase = document.createElement('button');
+ erase.className='num-btn erase'; erase.textContent='Erase';
+ erase.addEventListener('click',()=>placeNumber(0));
+ pad.appendChild(erase);
+})();
+
+// Keyboard support
+document.addEventListener('keydown', e=>{
+ if(!selectedCell) return;
+ const n = parseInt(e.key);
+ if(n>=1&&n<=9) placeNumber(n);
+ if(e.key==='Backspace'||e.key==='Delete') placeNumber(0);
+ if(e.key==='ArrowRight') moveSelection(0,1);
+ if(e.key==='ArrowLeft') moveSelection(0,-1);
+ if(e.key==='ArrowDown') moveSelection(1,0);
+ if(e.key==='ArrowUp') moveSelection(-1,0);
+});
+
+function moveSelection(dr,dc){
+ if(!selectedCell) return;
+ let [r,c] = selectedCell;
+ r = Math.max(0,Math.min(8,r+dr));
+ c = Math.max(0,Math.min(8,c+dc));
+ selectCell(r,c);
+}
+
+function renderGrid(){
+ const el=$('#grid'); el.innerHTML='';
+ for(let r=0;r<9;r++) for(let c=0;c<9;c++){
+  const cell=document.createElement('div');
+  cell.className='sudoku-cell';
+  cell.id=`sc-${r}-${c}`;
+  const val=userGrid[r][c];
+  if(val!==0) cell.textContent=val;
+  if(givenCells.has(`${r},${c}`)) cell.classList.add('given');
+  else if(val!==0) cell.classList.add('user-filled');
+  cell.addEventListener('click',()=>selectCell(r,c));
+  el.appendChild(cell);
+ }
+}
+
+function selectCell(r,c){
+ // Clear previous
+ document.querySelectorAll('.sudoku-cell').forEach(el=>{
+  el.classList.remove('selected','highlighted');
+ });
+ selectedCell=[r,c];
+ const cell=$(`#sc-${r}-${c}`);
+ cell.classList.add('selected');
+ // Highlight row, col, box
+ for(let i=0;i<9;i++){
+  $(`#sc-${r}-${i}`)?.classList.add('highlighted');
+  $(`#sc-${i}-${c}`)?.classList.add('highlighted');
+ }
+ const br=3*Math.floor(r/3), bc=3*Math.floor(c/3);
+ for(let rr=br;rr<br+3;rr++) for(let cc=bc;cc<bc+3;cc++)
+  $(`#sc-${rr}-${cc}`)?.classList.add('highlighted');
+ cell.classList.remove('highlighted');
+ cell.classList.add('selected');
+}
+
+function placeNumber(n){
+ if(!selectedCell) return;
+ const [r,c]=selectedCell;
+ if(givenCells.has(`${r},${c}`)) return; // can't modify given
+ userGrid[r][c]=n;
+ const cell=$(`#sc-${r}-${c}`);
+ cell.textContent=n||'';
+ cell.classList.remove('user-filled','error','solved');
+ if(n) cell.classList.add('user-filled');
+ clearStatus();
+}
+
+async function loadPuzzle(){
+ try{
+  const res=await fetch('/api/sudoku/puzzle');
+  const data=await res.json();
+  puzzle=data.puzzle;
+  userGrid=puzzle.map(r=>[...r]);
+  givenCells.clear();
+  for(let r=0;r<9;r++) for(let c=0;c<9;c++)
+   if(puzzle[r][c]!==0) givenCells.add(`${r},${c}`);
+  selectedCell=null;
+  renderGrid();
+  clearStatus();
+  $('#solveInfo').style.display='none';
+  $('#status').textContent='Fill in the empty cells and check your solution!';
+ }catch(e){$('#status').textContent='Error loading puzzle.';}
+}
+
+async function validateSolution(){
+ const grid=userGrid.map(r=>[...r]);
+ try{
+  const res=await fetch('/api/sudoku/validate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({grid})});
+  const data=await res.json();
+  const st=$('#status');
+  st.textContent=data.message;
+  if(data.valid){
+   st.className='status win';
+   $('#gridWrap').classList.add('celebrating');
+   setTimeout(()=>$('#gridWrap').classList.remove('celebrating'),500);
+  }else{
+   st.className='status fail';
+   highlightErrors();
+  }
+ }catch(e){$('#status').textContent='Error validating.';}
+}
+
+function highlightErrors(){
+ // Highlight cells that violate constraints
+ for(let r=0;r<9;r++) for(let c=0;c<9;c++){
+  const cell=$(`#sc-${r}-${c}`);
+  cell.classList.remove('error');
+ }
+ for(let r=0;r<9;r++){
+  const row=userGrid[r];
+  const seen={};
+  row.forEach((v,c)=>{if(v){if(seen[v]!==undefined){$(`#sc-${r}-${c}`).classList.add('error');$(`#sc-${r}-${seen[v]}`).classList.add('error');}seen[v]=c;}});
+ }
+ for(let c=0;c<9;c++){
+  const seen={};
+  for(let r=0;r<9;r++){const v=userGrid[r][c];if(v){if(seen[v]!==undefined){$(`#sc-${r}-${c}`).classList.add('error');$(`#sc-${seen[v]}-${c}`).classList.add('error');}seen[v]=r;}}
+ }
+}
+
+async function solvePuzzle(){
+ const grid=puzzle.map(r=>[...r]);
+ try{
+  const res=await fetch('/api/sudoku/solve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({grid})});
+  const data=await res.json();
+  if(data.solved){
+   userGrid=data.grid;
+   renderGrid();
+   // Mark solved cells
+   for(let r=0;r<9;r++) for(let c=0;c<9;c++){
+    if(!givenCells.has(`${r},${c}`)){
+     $(`#sc-${r}-${c}`).classList.remove('user-filled');
+     $(`#sc-${r}-${c}`).classList.add('solved');
+    }
+   }
+   $('#status').textContent='✅ Solved using CSP with Backtracking + MRV!';
+   $('#status').className='status win';
+   $('#solveInfo').style.display='block';
+   $('#solveTime').textContent=data.time_ms+' ms';
+  }else{
+   $('#status').textContent=data.message;
+   $('#status').className='status fail';
+  }
+ }catch(e){$('#status').textContent='Error solving.';}
+}
+
+function clearStatus(){$('#status').textContent='';$('#status').className='status';}
+
+loadPuzzle();
+</script>
+</body>
+</html>

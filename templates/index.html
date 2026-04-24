@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tic-Tac-Toe AI — Minimax vs Alpha-Beta</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f0f1a;--card:#1a1a2e;--accent:#6c63ff;--accent2:#ff6584;--text:#e0e0e0;--dim:#888;--win:#00e676;--border:rgba(255,255,255,.08);--glass:rgba(255,255,255,.04)}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(108,99,255,.12),transparent 50%),radial-gradient(circle at 70% 60%,rgba(255,101,132,.08),transparent 50%);z-index:0;pointer-events:none}
+h1{font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.25rem;position:relative;z-index:1}
+.subtitle{color:var(--dim);font-size:.85rem;margin-bottom:1rem;position:relative;z-index:1}
+/* Mode toggle */
+.mode-toggle{display:flex;gap:0;margin-bottom:1.5rem;position:relative;z-index:1;background:var(--card);border-radius:2rem;padding:4px;border:1px solid var(--border)}
+.mode-btn{padding:.5rem 1.4rem;border:none;border-radius:2rem;background:transparent;color:var(--dim);font-family:'Inter',sans-serif;font-weight:600;font-size:.82rem;cursor:pointer;transition:all .3s}
+.mode-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 15px rgba(108,99,255,.3)}
+.mode-btn:hover:not(.active){color:var(--text)}
+.container{display:flex;gap:2rem;align-items:flex-start;flex-wrap:wrap;justify-content:center;position:relative;z-index:1}
+/* Board */
+.board-wrap{background:var(--card);border-radius:1.25rem;padding:1.5rem;box-shadow:0 8px 32px rgba(0,0,0,.4);border:1px solid var(--border)}
+.board{display:grid;grid-template-columns:repeat(3,100px);grid-template-rows:repeat(3,100px);gap:6px}
+.cell{background:var(--glass);border:1px solid var(--border);border-radius:.75rem;display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:900;cursor:pointer;transition:all .2s;user-select:none}
+.cell:hover:not(.taken){background:rgba(108,99,255,.15);transform:scale(1.05)}
+.cell.taken{cursor:default}
+.cell.x{color:var(--accent2)}
+.cell.o{color:var(--accent)}
+.cell.win-cell{animation:glow .6s ease-in-out infinite alternate;background:rgba(0,230,118,.1)}
+@keyframes glow{to{box-shadow:0 0 18px rgba(0,230,118,.5)}}
+@keyframes pop{0%{transform:scale(0) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.cell.pop span{animation:pop .25s ease-out}
+.status{text-align:center;margin-top:1rem;font-size:1rem;font-weight:600;min-height:1.5rem;color:var(--accent)}
+.btn{display:inline-block;margin-top:.75rem;padding:.6rem 1.6rem;border:none;border-radius:2rem;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(108,99,255,.4)}
+/* Stats panel */
+.stats{background:var(--card);border-radius:1.25rem;padding:1.5rem 1.75rem;box-shadow:0 8px 32px rgba(0,0,0,.4);border:1px solid var(--border);min-width:300px;transition:opacity .3s,transform .3s}
+.stats.hidden{display:none}
+.stats h2{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text)}
+.stats-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.stats-table th,.stats-table td{padding:.55rem .5rem;text-align:center}
+.stats-table th{color:var(--dim);font-weight:600;border-bottom:1px solid var(--border)}
+.stats-table td{border-bottom:1px solid var(--border)}
+.stats-table tr:last-child td{border-bottom:none}
+.label-col{text-align:left!important;font-weight:600}
+.highlight{color:var(--win);font-weight:700}
+.chart-wrap{margin-top:1.25rem}
+.chart-wrap h3{font-size:.85rem;font-weight:600;margin-bottom:.5rem;color:var(--dim)}
+.bar-group{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;font-size:.75rem}
+.bar-label{width:80px;text-align:right;color:var(--dim);flex-shrink:0}
+.bar{height:18px;border-radius:4px;transition:width .4s ease;min-width:2px}
+.bar.mm{background:linear-gradient(90deg,var(--accent2),#ff8fa3)}
+.bar.ab{background:linear-gradient(90deg,var(--accent),#9b93ff)}
+.bar-val{color:var(--dim);font-size:.7rem;min-width:40px}
+.scoreboard{display:flex;gap:1.5rem;justify-content:center;margin-bottom:.5rem}
+.score-item{text-align:center}
+.score-item .lbl{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+.score-item .val{font-size:1.4rem;font-weight:900}
+.score-item .val.xc{color:var(--accent2)}
+.score-item .val.oc{color:var(--accent)}
+.score-item .val.dc{color:var(--dim)}
+@media(max-width:700px){.container{flex-direction:column;align-items:center}.board{grid-template-columns:repeat(3,85px);grid-template-rows:repeat(3,85px)}.stats{min-width:auto;width:100%;max-width:340px}}
+</style>
+</head>
+<body>
+<h1>Tic-Tac-Toe AI</h1>
+<p class="subtitle">Minimax vs Alpha-Beta Pruning</p>
+<div style="margin-bottom:1rem;position:relative;z-index:1"><a href="/sudoku" style="color:#6c63ff;text-decoration:none;font-size:.82rem;font-weight:600;padding:.4rem 1rem;border:1px solid #6c63ff;border-radius:2rem;transition:all .2s" onmouseover="this.style.background='#6c63ff';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='#6c63ff'">Go to Sudoku →</a></div>
+
+<div class="mode-toggle" id="modeToggle">
+ <button class="mode-btn active" id="btnSingle" onclick="setMode('single')">🤖 Single Player</button>
+ <button class="mode-btn" id="btnMulti" onclick="setMode('multi')">👥 Multiplayer</button>
+</div>
+
+<div class="container">
+ <div class="board-wrap">
+  <div class="scoreboard">
+   <div class="score-item"><div class="lbl" id="lblX">You (X)</div><div class="val xc" id="scoreX">0</div></div>
+   <div class="score-item"><div class="lbl">Draw</div><div class="val dc" id="scoreD">0</div></div>
+   <div class="score-item"><div class="lbl" id="lblO">AI (O)</div><div class="val oc" id="scoreO">0</div></div>
+  </div>
+  <div class="board" id="board"></div>
+  <div class="status" id="status">Your turn — click a cell</div>
+  <div style="text-align:center"><button class="btn" onclick="resetGame()">New Game</button></div>
+ </div>
+
+ <div class="stats" id="statsPanel">
+  <h2>📊 Algorithm Comparison</h2>
+  <table class="stats-table">
+   <tr><th></th><th>Minimax</th><th>Alpha-Beta</th></tr>
+   <tr><td class="label-col">Nodes Explored</td><td id="mmNodes">—</td><td id="abNodes">—</td></tr>
+   <tr><td class="label-col">Time (ms)</td><td id="mmTime">—</td><td id="abTime">—</td></tr>
+   <tr><td class="label-col">Pruning Savings</td><td colspan="2" id="savings">—</td></tr>
+  </table>
+  <div class="chart-wrap">
+   <h3>Nodes Explored Per Move</h3>
+   <div id="history"></div>
+  </div>
+ </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let board, gameOver, moveNum, currentTurn, mode = 'single';
+let scores = {X:0,O:0,D:0}, history = [];
+
+function setMode(m){
+ mode = m;
+ $('#btnSingle').classList.toggle('active', m==='single');
+ $('#btnMulti').classList.toggle('active', m==='multi');
+ $('#statsPanel').classList.toggle('hidden', m==='multi');
+ $('#lblX').textContent = m==='single' ? 'You (X)' : 'Player 1 (X)';
+ $('#lblO').textContent = m==='single' ? 'AI (O)' : 'Player 2 (O)';
+ scores={X:0,O:0,D:0}; updateScores();
+ history=[]; $('#history').innerHTML='';
+ clearStats(); init();
+}
+
+function init(){
+ board = [[null,null,null],[null,null,null],[null,null,null]];
+ gameOver = false; moveNum = 0; currentTurn = 'X';
+ const el = $('#board'); el.innerHTML = '';
+ for(let r=0;r<3;r++) for(let c=0;c<3;c++){
+  const cell = document.createElement('div');
+  cell.className = 'cell'; cell.dataset.r = r; cell.dataset.c = c;
+  cell.id = `cell-${r}-${c}`;
+  cell.addEventListener('click', () => onCellClick(r,c));
+  el.appendChild(cell);
+ }
+ setStatus();
+}
+
+function onCellClick(r,c){
+ if(gameOver || board[r][c]) return;
+ if(mode==='single'){
+  if(currentTurn!=='X') return;
+  board[r][c] = 'X'; renderCell(r,c,'X'); currentTurn='O';
+  if(checkEnd()) return;
+  $('#status').textContent = "AI is thinking…";
+  setTimeout(aiMove, 80);
+ } else {
+  board[r][c] = currentTurn; renderCell(r,c,currentTurn);
+  if(checkEnd()) return;
+  currentTurn = currentTurn==='X'?'O':'X';
+  setStatus();
+ }
+}
+
+async function aiMove(){
+ try{
+  const res = await fetch('/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({board})});
+  const data = await res.json();
+  if(data.error){$('#status').textContent=data.error;return;}
+  const {row,col} = data.move;
+  board[row][col] = 'O'; renderCell(row,col,'O'); currentTurn='X';
+  updateStats(data);
+  if(!checkEnd()) setStatus();
+ }catch(e){$('#status').textContent='Error: '+e.message;}
+}
+
+function renderCell(r,c,val){
+ const cell = $(`#cell-${r}-${c}`);
+ cell.innerHTML = `<span>${val}</span>`;
+ cell.classList.add('taken','pop', val==='X'?'x':'o');
+}
+
+function setStatus(){
+ if(gameOver) return;
+ if(mode==='single') $('#status').textContent = "Your turn — click a cell";
+ else $('#status').textContent = `${currentTurn==='X'?'Player 1':'Player 2'} (${currentTurn}) — click a cell`;
+}
+
+function checkEnd(){
+ const w = getWinner();
+ if(w){
+  gameOver = true; highlightWin(w.line);
+  if(mode==='single'){
+   if(w.mark==='X'){scores.X++;$('#status').textContent="You win! 🎉";}
+   else{scores.O++;$('#status').textContent="AI wins!";}
+  } else {
+   scores[w.mark]++;
+   $('#status').textContent = `${w.mark==='X'?'Player 1':'Player 2'} (${w.mark}) wins! 🎉`;
+  }
+  updateScores(); return true;
+ }
+ if(board.flat().every(v=>v!==null)){
+  gameOver=true;scores.D++;$('#status').textContent="It's a draw!";updateScores();return true;
+ }
+ return false;
+}
+
+function getWinner(){
+ const lines=[
+  [[0,0],[0,1],[0,2]],[[1,0],[1,1],[1,2]],[[2,0],[2,1],[2,2]],
+  [[0,0],[1,0],[2,0]],[[0,1],[1,1],[2,1]],[[0,2],[1,2],[2,2]],
+  [[0,0],[1,1],[2,2]],[[0,2],[1,1],[2,0]]
+ ];
+ for(const l of lines){
+  const [a,b,c]=l;
+  if(board[a[0]][a[1]]&&board[a[0]][a[1]]===board[b[0]][b[1]]&&board[b[0]][b[1]]===board[c[0]][c[1]])
+   return {mark:board[a[0]][a[1]], line:l};
+ }
+ return null;
+}
+
+function highlightWin(line){line.forEach(([r,c])=>$(`#cell-${r}-${c}`).classList.add('win-cell'));}
+function updateScores(){$('#scoreX').textContent=scores.X;$('#scoreO').textContent=scores.O;$('#scoreD').textContent=scores.D;}
+
+function clearStats(){
+ $('#mmNodes').textContent=$('#abNodes').textContent=$('#mmTime').textContent=$('#abTime').textContent='—';
+ $('#savings').textContent='—';
+}
+
+function updateStats(data){
+ moveNum++;
+ const mm=data.minimax, ab=data.alphabeta;
+ $('#mmNodes').textContent=mm.nodes;
+ $('#abNodes').textContent=ab.nodes;
+ $('#mmTime').textContent=mm.time_ms.toFixed(3);
+ $('#abTime').textContent=ab.time_ms.toFixed(3);
+ const saved=mm.nodes>0?((1-ab.nodes/mm.nodes)*100).toFixed(1):0;
+ $('#savings').innerHTML=`<span class="highlight">${saved}%</span> fewer nodes`;
+ $('#mmNodes').className = mm.nodes<=ab.nodes?'highlight':'';
+ $('#abNodes').className = ab.nodes<=mm.nodes?'highlight':'';
+ $('#mmTime').className = mm.time_ms<=ab.time_ms?'highlight':'';
+ $('#abTime').className = ab.time_ms<=mm.time_ms?'highlight':'';
+ history.push({move:moveNum,mm:mm.nodes,ab:ab.nodes});
+ renderChart();
+}
+
+function renderChart(){
+ const el=$('#history'); el.innerHTML='';
+ const max=Math.max(...history.map(h=>Math.max(h.mm,h.ab)),1);
+ history.slice(-6).forEach(h=>{
+  const pct=v=>Math.max((v/max)*140,2)+'px';
+  el.innerHTML+=`
+   <div class="bar-group"><span class="bar-label">Move ${h.move}</span>
+    <div class="bar mm" style="width:${pct(h.mm)}" title="Minimax: ${h.mm}"></div>
+    <span class="bar-val">${h.mm}</span>
+    <div class="bar ab" style="width:${pct(h.ab)}" title="Alpha-Beta: ${h.ab}"></div>
+    <span class="bar-val">${h.ab}</span>
+   </div>`;
+ });
+}
+
+function resetGame(){history=[];$('#history').innerHTML='';clearStats();init();}
+
+init();
+</script>
+</body>
+</html>

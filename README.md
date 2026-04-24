@@ -1,46 +1,136 @@
-# AI Problem Solving Project
+# 🧠 AI Problem Solving
 
-This project contains two classic AI problem-solving implementations built with a Streamlit interface. 
+**Repository:** `AI_ProblemSolving_RA2411026050086_RA2411026050082`
 
-## Features
+A web-based interactive application featuring two classic AI problems solved using intelligent algorithms. Built with **Python (Flask)** and deployed as a single unified web interface.
 
-1. **Tic-Tac-Toe AI:**
-   - Play Tic-Tac-Toe against an AI.
-   - Choose between **Minimax** and **Alpha-Beta Pruning** algorithms to see the difference in performance.
-   - The interface displays the execution time and number of nodes explored for each move.
+🔗 **Live Demo:** [Click here to play](https://ai-problemsolving-ra2411026050086-ra2411026050082.onrender.com)
 
-2. **Sudoku Solver:**
-   - Solves Sudoku puzzles using **Constraint Satisfaction Problem (CSP) / Backtracking**.
-   - Input a custom 9x9 grid to find its solution.
+---
 
-## Project Structure
+## 📁 Folder Structure
 
-- `app.py`: The main Streamlit application script containing the UI.
-- `TicTacToe/tictactoe.py`: The backend logic for the Tic-Tac-Toe game and the Minimax/Alpha-Beta algorithms.
-- `Sudoku/sudoku_solver.py`: The backend logic for solving Sudoku using backtracking.
-- `requirements.txt`: Python package dependencies.
+```
+AI_ProblemSolving_RA2411026050086_RA2411026050082/
+├── app.py                     # Flask backend — all game logic & API routes
+├── requirements.txt           # Python dependencies
+├── README.md                  # Project documentation
+└── templates/
+    ├── home.html              # Unified launcher with game switcher tabs
+    ├── index.html             # Tic-Tac-Toe interactive GUI
+    └── sudoku.html            # Sudoku interactive GUI
+```
 
-## Installation and Setup
+---
 
-1. **Clone the repository** (if you haven't already):
-   ```bash
-   git clone https://github.com/allaboinasai23/AI_ProblemSolving_RA2411026050086_RA2411026050082.git
-   cd AI_ProblemSolving_RA2411026050086_RA2411026050082
-   ```
+## 🎮 Problem 1: Tic-Tac-Toe AI
 
-2. **Install the requirements**:
-   Ensure you have Python installed. Then, run the following command to install the required packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Problem Description
+Build an AI opponent for a web-based Tic-Tac-Toe game where the computer always makes the **best possible move**. The user interacts via an interactive GUI.
 
-3. **Run the Streamlit app**:
-   ```bash
-   streamlit run app.py
-   ```
-   This will open the application in your default web browser where you can switch between the two AI problems in the sidebar.
+### Algorithms Used
 
-## Usage
+| Algorithm | Description |
+|-----------|-------------|
+| **Minimax** | Explores the entire game tree recursively to find the optimal move. Evaluates all possible future states. |
+| **Alpha-Beta Pruning** | An optimized version of Minimax that prunes branches that cannot influence the final decision, significantly reducing computation. |
 
-* **Tic-Tac-Toe**: Select the problem from the sidebar, choose your desired algorithm, and start playing by clicking on the empty squares. The AI plays as 'O'.
-* **Sudoku**: Enter the rows of your Sudoku puzzle in the provided input fields (use `0` for empty cells, separated by spaces), and click 'Solve Sudoku'.
+### Algorithm Comparison
+
+| Metric | Minimax | Alpha-Beta Pruning |
+|--------|---------|-------------------|
+| Nodes Explored (first move) | ~55,000 | ~2,300 |
+| Execution Time | ~243 ms | ~8.8 ms |
+| Pruning Savings | — | **~95.8% fewer nodes** |
+
+### Features
+- **Single Player** — Play against an unbeatable AI
+- **Multiplayer** — Two players on the same board
+- **Real-time Comparison** — See nodes explored, execution time, and pruning savings per move
+- **Visual Bar Chart** — Nodes explored history across moves
+- **Scoreboard** — Track wins, losses, and draws
+
+### Sample Output
+- User plays as **X**, AI plays as **O**
+- After each AI move, the stats panel shows:
+  - Minimax: 55504 nodes, 243.240 ms
+  - Alpha-Beta: 2315 nodes, 8.821 ms
+  - Pruning Savings: **95.8%** fewer nodes
+
+---
+
+## 🧩 Problem 2: Sudoku Solver
+
+### Problem Description
+A 9×9 Sudoku puzzle where the user fills in empty cells through an interactive GUI. The system evaluates the solution ("You won" / "Try again") and can auto-solve using AI.
+
+### Algorithm Used
+
+| Algorithm | Description |
+|-----------|-------------|
+| **CSP (Constraint Satisfaction Problem)** | Models Sudoku as a CSP where each empty cell is a variable with domain {1–9}. Uses **Backtracking** with **MRV (Minimum Remaining Values)** heuristic for efficient solving. |
+
+### Constraints Enforced
+- ✅ Each **row** contains digits 1–9 without repetition
+- ✅ Each **column** contains digits 1–9 without repetition
+- ✅ Each **3×3 subgrid** contains digits 1–9 without repetition
+
+### Features
+- **Interactive Grid** — Click cells and use numpad or keyboard to fill numbers
+- **Keyboard Support** — Arrow keys for navigation, number keys for input
+- **Check Solution** — Validates user's answer with "🎉 You won!" or "❌ Try again"
+- **Error Highlighting** — Cells violating constraints are highlighted in red
+- **Auto Solve (CSP)** — AI solves the puzzle instantly (~1-15 ms) and displays the solution
+- **Multiple Puzzles** — 4 different puzzles with "New Puzzle" button
+- **Cell Highlighting** — Selected cell highlights its row, column, and 3×3 box
+
+### Sample Output
+- Pre-filled puzzle displayed with given numbers in purple
+- User fills empty cells (shown in pink)
+- Click "Check Solution" → **"🎉 You won! The solution is correct!"**
+- Click "Auto Solve (CSP)" → Grid fills with solution in green, shows **"CSP Solve Time: 2.15 ms"**
+
+---
+
+## 🚀 Execution Steps
+
+### Prerequisites
+- Python 3.8+ installed
+- pip (Python package manager)
+
+### Installation & Run
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/allaboinasai23/AI_ProblemSolving_RA2411026050086_RA2411026050082.git
+cd AI_ProblemSolving_RA2411026050086_RA2411026050082
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Run the application
+python app.py
+
+# 4. Open in browser
+# Visit: http://127.0.0.1:5000
+```
+
+### Usage
+1. Open `http://127.0.0.1:5000` in your browser
+2. Use the **tab switcher** at the top to switch between games
+3. **Tic-Tac-Toe:** Click cells to play, view AI comparison stats on the right
+4. **Sudoku:** Click a cell → click a number on the numpad → Check or Auto-Solve
+
+---
+
+## 🛠️ Technologies Used
+- **Backend:** Python, Flask
+- **Frontend:** HTML5, CSS3, JavaScript
+- **AI Algorithms:** Minimax, Alpha-Beta Pruning, CSP with Backtracking + MRV
+- **Deployment:** Render / GitHub Pages
+
+---
+
+## 👥 Contributors
+- RA2411026050086
+- RA2411026050082
